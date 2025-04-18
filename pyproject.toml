@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "synsplore"
+version = "0.0.1"
+
+[project.scripts]
+synsplore = "synsplore.scripts.main:main"
+
+[tool.setuptools]
+packages = ["synsplore"]

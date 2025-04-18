@@ -1,0 +1,5 @@
+working_dir: ./out/
+molecules: mols.pkl
+featurizer: morgan3-1024
+output_mols: mols.pkl
+output_featurizer: mfeaturizer.pkl

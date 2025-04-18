@@ -1,0 +1,6 @@
+working_dir: ./out/
+molecules: mols.pkl
+reactions: rxns.pkl
+molmap: molmap.pkl
+output: routes.pkl
+num_samples: 1000
