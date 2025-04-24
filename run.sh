@@ -9,3 +9,6 @@ synsplore featurize reactions -c configs/rxnfeats.yaml
 
 echo Sampling synthesis routes...
 synsplore sample -c configs/sample.yaml
+
+echo Featurizing routes and product pharmacophores...
+synsplore featurize routes -c configs/roufeats.yaml 

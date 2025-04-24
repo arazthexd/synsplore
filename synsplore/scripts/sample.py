@@ -11,7 +11,7 @@ from rdkit.Chem import rdMolDescriptors
 from druglab.storage import MolStorage, RxnStorage
 from druglab.synthesis import (
     SynRouteSampler, SynRouteSamplerOpts,
-    SynthesisRoute, 
+    SynthesisRoute, SynRouteStorage
 )
 
 from .utils import load_yaml_config
@@ -90,10 +90,10 @@ def sample(config,
     with open(molmap, "rb") as f:
         midx2rrxnids = dill.load(f)
 
-    opts = SynRouteSamplerOpts(min_steps=3, 
+    opts = SynRouteSamplerOpts(min_steps=1, 
                                max_steps=6, 
-                               max_construct_attempts=30,
-                               max_sample_attempts=20)
+                               max_construct_attempts=50,
+                               max_sample_attempts=10)
     sampler = SynRouteSampler(bbs=mols, 
                               rxns=rxns,
                               bb2rxnr=midx2rrxnids,
@@ -110,8 +110,17 @@ def sample(config,
     def worker_task(worker_state, idx):
         sampler: SynRouteSampler = worker_state["sampler"]
         filter_func = worker_state["filter_func"]
-        return sampler.sample(only_last=False, 
-                              filter_func=filter_func)
+        routes = sampler.sample(only_last=False, 
+                                filter_func=filter_func)
+        routes_ = []
+        prevsmis = set()
+        for route in routes:
+            smi = Chem.MolToSmiles(route.products[-1])
+            if smi not in prevsmis:
+                routes_.append(route)
+                prevsmis.add(smi)
+        
+        return routes_
 
     click.echo("Sampling...")
     synroutes: List[SynthesisRoute] = []
@@ -130,5 +139,6 @@ def sample(config,
     bar.close()
 
     click.echo("Saving...")
+    synroutes = SynRouteStorage(synroutes)
     with open(output, "wb") as f:
         dill.dump(synroutes, f)

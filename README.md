@@ -7,7 +7,8 @@ Learning to explore the synthesizable chemical space, conditioned on target phar
 - [ ] Preprocessing filters for dataset molecules
 - [x] Featurizing mols, rxns
 - [x] Sampling synthesis routes 
-- [ ] Featurizing synthesis routes 
+- [x] Filter for sampling routes (no duplicates)
+- [x] Featurizing synthesis routes 
 - [ ] Pharm generation for syn route products
 - [ ] (?) Dimensionality reduction for molecules
 
