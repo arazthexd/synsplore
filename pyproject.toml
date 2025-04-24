@@ -5,6 +5,15 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "synsplore"
 version = "0.0.1"
+dependencies = [
+    "druglab@git+https://github.com/arazthexd/druglab",
+    "rdkit>=2024",
+    "mpire",
+    "click",
+    "pyyaml",
+    "dill",
+    "pyyaml"
+]
 
 [project.scripts]
 synsplore = "synsplore.scripts.main:main"
