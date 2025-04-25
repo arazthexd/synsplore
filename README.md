@@ -4,6 +4,7 @@ Learning to explore the synthesizable chemical space, conditioned on target phar
 ## TODOs
 ### DrugLab Features
 - [ ] Implement PharmStorage class and update the existing code.
+- [ ] Figure out why base definitions yaml for pharms is not transfered
 
 ### Data Generation
 - [x] Reading data and creating a storage for mols, rxns, matching
@@ -19,7 +20,7 @@ Learning to explore the synthesizable chemical space, conditioned on target phar
 ### Dataset
 - [x] Main torch dataset (initiating, loading, saving, indexing)
 - [x] Pharm feature location/value noise transform
-- [ ] Pharm feature masking transform
+- [x] Pharm feature masking transform
 - [ ] Dataset Initiation Script
 
 ### Model
