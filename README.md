@@ -14,10 +14,11 @@ Learning to explore the synthesizable chemical space, conditioned on target phar
 - [x] Featurizing synthesis routes 
 - [x] Pharm generation for syn route products
 - [ ] (?) Dimensionality reduction for molecules
+- [ ] Seed for sampling routes
 
 ### Dataset
 - [x] Main torch dataset (initiating, loading, saving, indexing)
-- [ ] Pharm feature location/value noise transform
+- [x] Pharm feature location/value noise transform
 - [ ] Pharm feature masking transform
 - [ ] Dataset Initiation Script
 
@@ -27,6 +28,7 @@ TODO...
 ### Repository
 - [ ] Create dev branch...
 - [ ] Pytorch Dataset Initiation Description
+- [ ] Add torch requirements to dependencies and installation instruction.
 
 ## Installation
 1. Create a virtual environment either in conda, mamba, or pip.
