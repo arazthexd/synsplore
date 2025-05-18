@@ -71,9 +71,9 @@ class SynsploreDataset(Dataset):
         This will have a shape of (n_combinations, n_pairs) if the data is not
         batched. If the data is batched, the shape will be
         (batch_size, max(n_combinations), n_pairs). Batching similar to `tys`.
-    - `angles`: The angles between the pharmacophoric feature direcion of the
-        first and second features in the combination, with the different vector
-        between their coordinates. This will have a shape of
+    - `angles`: The angles (in radians) between the pharmacophoric feature 
+        direcion of the first and second features in the combination, with the 
+        different vector between their coordinates. This will have a shape of
         (n_combinations, n_pairs, 2) if the data is not batched. Otherwise,
         it will have a shape of (batch_size, max(n_combinations), n_pairs, 2).
         Batching similar to `tys`.
@@ -147,7 +147,8 @@ class SynsploreDataset(Dataset):
             if unusedp_count == 1:
                 break
             else:
-                print(route, unusedp_count)
+                # print(route, unusedp_count)
+                pass
             
         lr = route.count("r")
         lrxn = route.count("rxn")
@@ -158,12 +159,16 @@ class SynsploreDataset(Dataset):
         rxnfeats = torch.zeros((lrxn, 27), dtype=int)
         rxnfeats[torch.arange(rxnfeats.shape[0]), 
                  [random.randint(0, 26) for _ in range(rxnfeats.shape[0])]] = 1
-        ridx = torch.tensor([i for i, mem in enumerate(route) if mem == "r"])
-        pidx = torch.tensor([i for i, mem in enumerate(route) if mem == "p"])
-        rxnidx = torch.tensor([i for i, mem in enumerate(route) if mem == "rxn"])
-        usepidx = torch.tensor([i for i, mem in enumerate(route) if mem == "usep"])
-        stidx = torch.tensor([0])
-        endidx = torch.tensor([len(route)-1])
+        ridx = torch.tensor([i for i, mem in enumerate(route) 
+                             if mem == "r"], dtype=torch.long)
+        pidx = torch.tensor([i for i, mem in enumerate(route) 
+                             if mem == "p"], dtype=torch.long)
+        rxnidx = torch.tensor([i for i, mem in enumerate(route) 
+                               if mem == "rxn"], dtype=torch.long)
+        usepidx = torch.tensor([i for i, mem in enumerate(route) 
+                                if mem == "usep"], dtype=torch.long)
+        stidx = torch.tensor([0], dtype=torch.long)
+        endidx = torch.tensor([len(route)-1], dtype=torch.long)
         syndata = TensorDict(
             {
                 "rfeats": rfeats,
@@ -212,12 +217,10 @@ class SynsploreDataset(Dataset):
                          syndata["usepidx"]], dim=-1) 
             for i, syndata in enumerate(sdlist)
         ]
-        usepidx = torch.cat(rxnidx_list, dim=0)
+        usepidx = torch.cat(usepidx_list, dim=0)
 
-        stidx = torch.tensor([i for i, syndata in enumerate(sdlist) 
-                            for _ in range(len(syndata["stidx"]))])
-        endidx = torch.tensor([i for i, syndata in enumerate(sdlist) 
-                             for _ in range(len(syndata["endidx"]))])
+        stidx = torch.tensor([syndata["stidx"] for syndata in sdlist])
+        endidx = torch.tensor([syndata["endidx"] for syndata in sdlist])
         
         return TensorDict({
             "rfeats": rfeats,
