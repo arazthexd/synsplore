@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 LOSS_GENERATORS: Dict[str, Type[nn.Module]] = {
+    "none": lambda: None, 
     "ce": nn.CrossEntropyLoss,
     "bce": nn.BCELoss,
     "bce_logits": nn.BCEWithLogitsLoss,

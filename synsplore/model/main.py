@@ -16,6 +16,7 @@ class SynModule(nn.Module):
                  r_dec: nn.Module, # _SimpleVAEDecoder
                  rxn_dec: nn.Module): # _SimpleVAEDecoder
         super().__init__()
+        print(f"r_enc: {r_enc}")
         self.d_model = d_model
         self.r_enc = r_enc
         self.rxn_enc = rxn_enc
@@ -61,15 +62,24 @@ class SynModule(nn.Module):
             torch.tensor([[0, 1, 0, 0]]).repeat(syndata["rxnidx"].shape[0], 1),
             torch.tensor([[0, 0, 1, 0]]).repeat(syndata["usepidx"].shape[0], 1),
             torch.tensor([[0, 0, 0, 1]]).repeat(syndata["endidx"].shape[0], 1),
-        ])
+        ]).type(torch.float)
+
         loss_cls = self.classifier.get_loss(syndata["seqenc"][*cls_idx.T], 
                                             cls_true)
         
-        loss_r = self.r_dec.get_loss(syndata["seqenc"][*r_idx.T], 
-                                     syndata["rout"])
+        if "rout" in syndata.keys():
+            loss_r = self.r_dec.get_loss(syndata["seqenc"][*r_idx.T], 
+                                        syndata["rout"])
+        else:
+            loss_r = self.r_dec.get_loss(syndata["seqenc"][*r_idx.T], 
+                                        syndata["rfeats"])
         
-        loss_rxn = self.rxn_dec.get_loss(syndata["seqenc"][*rxn_idx.T], 
+        if "rxnout" in syndata.keys():
+            loss_rxn = self.rxn_dec.get_loss(syndata["seqenc"][*rxn_idx.T], 
                                          syndata["rxnout"])
+        else:
+            loss_rxn = self.rxn_dec.get_loss(syndata["seqenc"][*rxn_idx.T], 
+                                         syndata["rxnfeats"])
         
         return loss_cls, loss_r, loss_rxn
     
@@ -86,7 +96,7 @@ class SynModule(nn.Module):
 
         seqenc = self._construct_transformer_seq(syndata)
         seqenc = seqenc[:, :-1]
-        seqenc = self.pos_enc(seqenc)
+        seqenc = self.pos_enc(seqenc, syndata["stidx"])
         return seqenc
     
     def _update_seqenc(self, syndata: TensorDict, cond: torch.Tensor = None):
@@ -102,7 +112,9 @@ class SynModule(nn.Module):
     def _get_predidx(self, syndata: TensorDict):
         cls_idx = torch.cat([
             syndata["ridx"], syndata["rxnidx"], 
-            syndata["usepidx"], syndata["endidx"], 
+            syndata["usepidx"], 
+            torch.stack([torch.arange(syndata["endidx"].shape[0]),
+                          syndata["endidx"]], dim=1), 
         ], dim=0)
         cls_idx[:, 1] -= 1
         
@@ -171,10 +183,10 @@ class SynModule(nn.Module):
         if reverse_start:
             idx = data["stidx"].clone()
             idx += seqid_shift
-            mask[torch.arange(seq.shape[0]), *idx.T] = mask_vals
+            mask[torch.arange(seq.shape[0]), idx] = mask_vals
         if reverse_end:
             idx = data["endidx"].clone()
             idx += seqid_shift
-            mask[torch.arange(seq.shape[0]), *idx.T] = mask_vals
+            mask[torch.arange(seq.shape[0]), idx] = mask_vals
         return mask
         

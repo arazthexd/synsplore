@@ -35,9 +35,9 @@ class _SimpleMLP(nn.Module):
             self.layers["lin0"] = nn.Linear(d_in, d_hidden)
             self.layers["act0"] = hidden_activation()
             for i in range(1, n_layers-1):
-                self.layers[f"lin{i}"] = nn.Linear(d_in, d_hidden)
+                self.layers[f"lin{i}"] = nn.Linear(d_hidden, d_hidden)
                 self.layers[f"act{i}"] = hidden_activation()
-            self.layers[f"lin{n_layers-1}"] = nn.Linear(d_in, d_out)
+            self.layers[f"lin{n_layers-1}"] = nn.Linear(d_hidden, d_out)
             self.layers[f"act{n_layers-1}"] = output_activation()
         
         self.loss_fn = LOSS_GENERATORS[loss]()

@@ -7,36 +7,37 @@ import torch.nn.functional as F
 from .act import ACTIVATION_GENERATORS
 from .loss import LOSS_GENERATORS
 
-class _SimpleTransformer(nn.Module):
+class _TransformerDecoder(nn.Module):
     def __init__(self, 
                  d_model: int, 
-                 nhead: int, 
-                 dim_feedforward: int, 
-                 num_layers: int, 
+                 n_heads: int, 
+                 d_feedforward: int, 
+                 n_layers: int, 
                  output_norm: bool,
                  has_encoder: bool):
+        super().__init__()
         
         if not has_encoder:
             self.dec = nn.TransformerEncoder(
                 encoder_layer=nn.TransformerEncoderLayer(
                     d_model=d_model,
-                    nhead=nhead,
-                    dim_feedforward=dim_feedforward,
+                    nhead=n_heads,
+                    dim_feedforward=d_feedforward,
                     batch_first=True,
                     norm_first=True),
-                num_layers=num_layers,
+                num_layers=n_layers,
                 norm=nn.LayerNorm(d_model) if output_norm else None
             )
         else:
             self.dec = nn.TransformerDecoder(
                 decoder_layer=nn.TransformerDecoderLayer(
                     d_model=d_model,
-                    nhead=nhead,
-                    dim_feedforward=dim_feedforward,
+                    nhead=n_heads,
+                    dim_feedforward=d_feedforward,
                     batch_first=True,
                     norm_first=True
                 ),
-                num_layers=num_layers,
+                num_layers=n_layers,
                 norm=nn.LayerNorm(d_model) if output_norm else None
             )
         
