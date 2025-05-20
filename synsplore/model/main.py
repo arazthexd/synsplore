@@ -8,13 +8,13 @@ from tensordict import TensorDict
 class SynModule(nn.Module):
     def __init__(self,
                  d_model: int,
-                 r_enc: nn.Module,
-                 rxn_enc: nn.Module,
-                 pos_enc: nn.Module,
-                 seq_enc: nn.Module,
-                 classifier: nn.Module,
-                 r_dec: nn.Module,
-                 rxn_dec: nn.Module):
+                 r_enc: nn.Module, # _SimpleMLP
+                 rxn_enc: nn.Module, # _SimpleEmbedding
+                 pos_enc: nn.Module, # TODO
+                 seq_enc: nn.Module, # TODO
+                 classifier: nn.Module, # _SimpleMLP
+                 r_dec: nn.Module, # _SimpleVAEDecoder
+                 rxn_dec: nn.Module): # _SimpleVAEDecoder
         super().__init__()
         self.d_model = d_model
         self.r_enc = r_enc
