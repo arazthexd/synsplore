@@ -52,9 +52,7 @@ class _SimpleVAEDecoder(nn.Module):
         return self.decoder(z), mu, logvar
     
     def get_loss(self, z: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
-        y_pred, mu, logvar = self.forward(z)
-        print(f"y_pred: {y_pred.shape}")
-        print(f"y_true: {y_true.shape}")    
+        y_pred, mu, logvar = self.forward(z)  
         recon_loss = self.decoder.loss_fn(y_pred, y_true)
         kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
         return recon_loss + self.loss_beta * kl_loss

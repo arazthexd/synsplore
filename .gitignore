@@ -10,3 +10,11 @@ data/
 out/
 x.ipynb
 trash
+
+## mac
+.DS_Store
+.AppleDouble
+.LSOverride
+
+## hydra
+outputs/

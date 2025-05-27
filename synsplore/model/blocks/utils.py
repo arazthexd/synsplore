@@ -44,10 +44,5 @@ class _PositionalEncoding(nn.Module):
         idx = idx - stidx.unsqueeze(1)
         mask = idx >= 0
         idx[~mask] = 0
-        print()
-        print(f"idx: {idx.shape}")
-        print(f"self.pe: {self.pe.shape}")
-        print(f"x: {x.shape}")
         x = x + self.pe[idx]
-        print()
         return self.dropout(x)

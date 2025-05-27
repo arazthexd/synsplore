@@ -1,2 +1,18 @@
-default:
+training:
+  epochs: 10
+  batch_size: 32
+  learning_rate: 0.001
+  optimizer: 'adam'
+  loss_function_approach: 'weighted'
+  validation_split: 0.2
+  early_stopping_patience: 10
+  save_best_model: True
+  model_save_path: 'models/best_model.pth'
+  logging_interval: 10
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1_score
+  
   
