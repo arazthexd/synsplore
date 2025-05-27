@@ -7,7 +7,7 @@ r_enc:
   _target_: synsplore.model.blocks.mlp._SimpleMLP
   d_in: 1024
   d_hidden: 512
-  d_out: ${global.d_model}
+  d_out: ${..global.d_model}
   n_layers: 3
   h_act: "relu"
   out_act: "none"
@@ -16,17 +16,17 @@ r_enc:
 rxn_enc:
   _target_: "synsplore.model.blocks.utils._SimpleEmbedding"
   n_emb: 100
-  d_emb: ${global.d_model}
+  d_emb: ${..global.d_model}
 
 pos_enc:
   _target_: "synsplore.model.blocks.utils._PositionalEncoding"
-  d_model: ${global.d_model}
+  d_model: ${..global.d_model}
   dropout: 0.1
   max_len: 1000
 
 seq_enc:
   _target_: "synsplore.model.blocks.tfmer._TransformerDecoder"
-  d_model: ${global.d_model}
+  d_model: ${..global.d_model}
   n_heads: 8
   n_layers: 6
   d_feedforward: 2048
@@ -35,7 +35,7 @@ seq_enc:
 
 classifier:
   _target_: "synsplore.model.blocks.mlp._SimpleMLP"
-  d_in: ${global.d_model}
+  d_in: ${..global.d_model}
   d_hidden: 512
   d_out: 4
   n_layers: 3
@@ -45,10 +45,10 @@ classifier:
 
 r_dec:
   _target_: "synsplore.model.blocks.vae._SimpleVAEDecoder"
-  d_in: ${global.d_model}
-  d_latent: ${global.d_model} # TOFO
+  d_in: ${..global.d_model}
+  d_latent: ${..global.d_model} # TOFO
   d_hidden: 512
-  d_out: ${global.d_rout}
+  d_out: ${..global.d_rout}
   n_layers: 3
   h_act: "relu"
   out_act: "none"
@@ -57,10 +57,10 @@ r_dec:
 
 rxn_dec:
   _target_: "synsplore.model.blocks.vae._SimpleVAEDecoder"
-  d_in: ${global.d_model}
-  d_latent: ${global.d_model} # TOFO
+  d_in: ${..global.d_model}
+  d_latent: ${..global.d_model} # TOFO
   d_hidden: 512
-  d_out: ${global.d_rxnout}
+  d_out: ${..global.d_rxnout}
   n_layers: 3
   h_act: "relu"
   out_act: "none"

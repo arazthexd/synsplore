@@ -1,0 +1,11 @@
+defaults:
+  - _self_
+  - data: default
+  - model: default
+
+run: datagen # datagen, train, ...
+subrun: prep_stores # all, prep_stores, ...
+
+hydra:
+  job:
+    chdir: yes

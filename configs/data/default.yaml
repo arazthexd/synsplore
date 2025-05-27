@@ -1,0 +1,92 @@
+
+run:
+  checking: False
+  num_workers: 15
+
+  inputs:
+    molecules:
+      files:
+        - data/bbs1.sdf
+      filters:
+        lower_weight: 0
+        upper_weight: 250
+        max_rotbonds: 5
+    
+    reactions:
+      files:
+        - data/rxns1.txt
+        - data/rxns2.txt
+  
+  outputs:
+    use_original_dir: False
+    molecules: data/mols.h5
+    reactions: data/rxns.h5
+    routes: data/routes.h5
+    pharms: data/pharms.h5
+
+sampling:
+  inputs:
+    reactions: ${...run.outputs.reactions}
+  output:
+    target_num: 10000
+  options:
+    min_steps: 1
+    max_steps: 6
+    batch_num_templates: 100
+    batch_num_samplers_per_template: 100
+    final_routes_only: False
+  filters:
+    min_qed: 0.6
+    alerts: True
+  
+features:
+  molecules:
+    input:
+      size: 4096
+      featurizer: 
+        _target_: druglab.featurize.MorganFPFeaturizer
+        radius: 3
+        size: ${..size}
+    output:
+      reuse_input: False
+      size: 256
+      featurizer: 
+        _target_: druglab.featurize.MorganFPFeaturizer
+        radius: 3
+        size: ${..size}
+
+  reactions:
+    input:
+      size: n_rxns # n_rxns or int
+      featurizer:
+        _target_: druglab.featurize.RxnOneHotFeaturizer
+    output:
+      reuse_input: True
+
+pharms:
+  definitions: default
+  preparation:
+    _target_: druglab.prepare.MoleculePreparation
+    addhs: True
+    cgen: True
+    cgen_n: 20
+    cgen_maxatts: 40
+    copt: True
+    copt_maxits: 10
+    cclust: True
+    cclust_tol: 0.2
+  profiler:
+    _target_: druglab.pharm.PharmDefaultProfiler
+    _partial_: True
+    ngroup: 2
+    mindist: 0.2
+  adjuster:
+    _target_: druglab.pharm.InternalStericAdjuster
+    tolerance: 0.2
+
+    
+
+dataset:
+  disable_products: False
+  routes_path: ${..run.outputs.routes}
+  pharms_path: ${..run.outputs.pharms}

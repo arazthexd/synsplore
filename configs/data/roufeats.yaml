@@ -1,6 +1,0 @@
-working_dir: ./out/
-routes: routes.pkl
-mol_featurizer: mfeaturizer.pkl
-rxn_featurizer: rfeaturizer.pkl
-output_routes: routes.pkl
-output_pharms: pharms.pkl

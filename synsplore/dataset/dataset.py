@@ -1,5 +1,8 @@
 from typing import List
 import random
+import h5py
+import numpy as np
+from omegaconf import DictConfig
 
 import torch
 from torch.utils.data import Dataset
@@ -89,19 +92,121 @@ class SynsploreDataset(Dataset):
             route output data or not.
     """
 
-    def __init__(self, disable_products: bool = True):
-        """Initiates SynsploreDataset class.
-
-        Args:
-            disable_products (bool, optional): Whether to exclude products 
-                in the synthesis route output data or not. Defaults to True.
-        """
+    def __init__(self, cfg: DictConfig):
         self.num_pharm_ty = 6
         self.num_pharm_tyid = 15
-        self.disable_products: bool = disable_products
+        self.disable_products: bool = cfg.dataset.disable_products
 
-    def __getitem__(self, idx: int) -> TensorDict:
-        pass
+        self.syndb = h5py.File(cfg.dataset.routes_path, "r")
+        self.pharmdb = h5py.File(cfg.dataset.pharms_path, "r")
+
+        self.n_molin = cfg.features.molecules.input.size
+        if cfg.features.reactions.output.reuse_input:
+            self.n_rxnin = self.syndb["rxnstore"]["feats"].shape[1] // 2
+        elif self.n_rxnin == "n_rxns":
+            raise NotImplementedError()
+        else:
+            self.n_rxnin = cfg.features.molecules.output.size
+
+        self._synids = []
+        self._pharmids = []
+        for i in range(len(self.syndb["seqs"])):
+            if str(i) not in self.pharmdb:
+                continue
+            pharmgrp = self.pharmdb[str(i)]
+            for j in range(pharmgrp["subids"].__len__()):
+                self._pharmids.append(j)
+                self._synids.append(i) 
+    
+    def _get_syn(self, idx: int) -> TensorDict:
+
+        idx = self._synids[idx]
+        
+        seq: np.ndarray = self.syndb["seqs"][str(idx)][:]
+        cls_idx = seq[:, 0]
+        dbidx = seq[:, 1]
+
+        stidx = np.where(cls_idx==0)[0]
+        ridx = np.where(cls_idx==1)[0]
+        rxnidx = np.where(cls_idx==2)[0]
+        pidx = np.where(cls_idx==3)[0]
+        usepidx = np.where(cls_idx==4)[0]
+        endidx = np.where(cls_idx==5)[0]
+
+        rdbidx = dbidx[ridx]
+        _origidx = rdbidx.argsort()
+        rdbidx = rdbidx[_origidx]
+        _origidx = _origidx.argsort()
+        rdbidx, counts = np.unique(rdbidx, return_counts=True)
+        # print(rdbidx, counts, _origidx)
+        rfeats = self.syndb["rstore"]["feats"][rdbidx]
+        # print(rfeats.shape)
+        rfeats = np.repeat(rfeats, counts, axis=0)[_origidx]
+        # print(rfeats, rfeats.shape, counts)
+        rfeats, rout = rfeats[:, :self.n_molin], rfeats[:, self.n_molin:]
+
+        rxndbidx = dbidx[rxnidx]
+        _origidx = rxndbidx.argsort()
+        rxndbidx = rxndbidx[_origidx]
+        _origidx = _origidx.argsort()
+        rxndbidx, counts = np.unique(rxndbidx, return_counts=True)
+        # print(rxndbidx, counts, _origidx)
+        rxnfeats = self.syndb["rxnstore"]["feats"][rxndbidx]
+        rxnfeats = np.repeat(rxnfeats, counts, axis=0)[_origidx]
+        rxnfeats, rxnout = rxnfeats[:, :self.n_rxnin], rxnfeats[:, self.n_rxnin:]
+
+        pdbidx = dbidx[pidx]
+        _origidx = pdbidx.argsort()
+        pdbidx = pdbidx[_origidx]
+        _origidx = _origidx.argsort()
+        pdbidx, counts = np.unique(pdbidx, return_counts=True)
+        pfeats = self.syndb["pstore"]["feats"][pdbidx]
+        pfeats = np.repeat(pfeats, counts, axis=0)[_origidx]
+        pfeats, pout = pfeats[:, :self.n_molin], pfeats[:, self.n_molin:]
+
+        return TensorDict({
+            "rfeats": torch.tensor(rfeats),
+            "rout": torch.tensor(rout),
+            "pfeats": torch.tensor(pfeats),
+            "pout": torch.tensor(pout),
+            "rxnfeats": torch.tensor(rxnfeats),
+            "rxnout": torch.tensor(rxnout),
+            "ridx": torch.tensor(ridx),
+            "pidx": torch.tensor(pidx),
+            "rxnidx": torch.tensor(rxnidx),
+            "usepidx": torch.tensor(usepidx),
+            "stidx": torch.tensor(stidx),
+            "endidx": torch.tensor(endidx)
+        })
+    
+    def _get_pharm(self, idx: int) -> TensorDict:
+        idx1 = str(self._synids[idx])
+        idx2 = str(self._pharmids[idx])
+        grp = self.pharmdb[idx1]
+        subids = torch.tensor(grp["subids"][idx2][:])
+        tys = torch.tensor(grp["tys"][:][subids])
+        tyids = torch.tensor(grp["tyids"][:][subids])
+        dists = torch.tensor(grp["dists"][:][subids])
+        angles = torch.tensor(grp["angles"][:][subids])
+        return TensorDict({
+            "tys": tys,
+            "tyids": tyids,
+            "dists": dists,
+            "angles": angles
+        })
+    
+    def __getitem__(self, idx) -> TensorDict:
+        return TensorDict({
+            "syndata": self._get_syn(idx),
+            "pharmdata": self._get_pharm(idx)
+        })
+    
+    def __len__(self):
+        return self._synids.__len__()
+    
+    def close(self):
+        self.syndb.close()
+        self.pharmdb.close()
 
     def random_data(self) -> TensorDict:
         l = random.randint(0, 100)

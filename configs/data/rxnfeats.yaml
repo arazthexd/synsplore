@@ -1,5 +1,0 @@
-working_dir: ./out/
-reactions: rxns.pkl
-featurizer: rxn-onehot
-output_mols: rxns.pkl
-output_featurizer: rxnfeaturizer.pkl
