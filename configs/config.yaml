@@ -1,6 +1,5 @@
 defaults:
   - model: default
   - train: default
-  - data: default
   - override hydra/job_logging: default
   - override hydra/hydra_logging: default

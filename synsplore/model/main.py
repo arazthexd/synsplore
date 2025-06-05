@@ -55,8 +55,21 @@ class SynModule(nn.Module):
                  syndata: TensorDict | Dict[str, torch.Tensor], # for typing :)
                  cond: torch.Tensor = None):
         
-        syndata, cls_idx, r_idx, rxn_idx = self.process(syndata, cond)
+        # syndata, cls_idx, r_idx, rxn_idx = self.process(syndata, cond)
 
+        cls_true, r_true, rxn_true = self.get_trues(syndata)
+
+        loss_cls = self.classifier.get_loss(cls_true)
+        
+        loss_r = self.r_dec.get_loss(r_true)
+
+        loss_rxn = self.rxn_dec.get_loss(rxn_true)
+        
+        return loss_cls, loss_r, loss_rxn
+    
+    @staticmethod
+    def get_trues(syndata: TensorDict | Dict[str, torch.Tensor]):
+        
         cls_true = torch.cat([
             torch.tensor([[1, 0, 0, 0]]).repeat(syndata["ridx"].shape[0], 1),
             torch.tensor([[0, 1, 0, 0]]).repeat(syndata["rxnidx"].shape[0], 1),
@@ -64,25 +77,31 @@ class SynModule(nn.Module):
             torch.tensor([[0, 0, 0, 1]]).repeat(syndata["endidx"].shape[0], 1),
         ]).type(torch.float)
 
-        loss_cls = self.classifier.get_loss(syndata["seqenc"][*cls_idx.T], 
-                                            cls_true)
-        
         if "rout" in syndata.keys():
-            loss_r = self.r_dec.get_loss(syndata["seqenc"][*r_idx.T], 
-                                        syndata["rout"])
+            rout = syndata["rout"]
         else:
-            loss_r = self.r_dec.get_loss(syndata["seqenc"][*r_idx.T], 
-                                        syndata["rfeats"])
+            rout = syndata["rfeats"]
         
         if "rxnout" in syndata.keys():
-            loss_rxn = self.rxn_dec.get_loss(syndata["seqenc"][*rxn_idx.T], 
-                                         syndata["rxnout"])
+            rxnout = syndata["rxnout"]
         else:
-            loss_rxn = self.rxn_dec.get_loss(syndata["seqenc"][*rxn_idx.T], 
-                                         syndata["rxnfeats"])
-        
-        return loss_cls, loss_r, loss_rxn
-    
+            rxnout = syndata["rxnfeats"]
+
+        return (cls_true, rout, rxnout)
+
+    def get_metrics(self, 
+                    syndata: TensorDict | Dict[str, torch.Tensor]):
+        cls_true, r_true, rxn_true = self.get_trues(syndata)
+
+        cls_metrics = self.classifier.get_metrics(cls_true)
+        r_metrics = self.r_dec.get_metrics(r_true)
+        rxn_metrics = self.rxn_dec.get_metrics(rxn_true)
+
+        metrics_outputs = {"cls_metrics": cls_metrics,
+                           "r_metrics": r_metrics,
+                           "rxn_metrics": rxn_metrics}
+        return metrics_outputs
+
     def _get_encs(self, syndata: TensorDict):
         renc = self.r_enc(syndata["rfeats"])
         rxnenc = self.rxn_enc(syndata["rxnfeats"])

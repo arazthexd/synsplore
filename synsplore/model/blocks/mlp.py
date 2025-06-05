@@ -15,7 +15,8 @@ class _SimpleMLP(nn.Module):
                  n_layers: int = 3,
                  h_act: str = "relu",
                  out_act: str = "none",
-                 loss: str = "ce"):
+                 loss: str = "ce",
+                 metrics: dict = {}):
         assert n_layers > 0
         if d_hidden is None:
             d_hidden = d_in
@@ -26,6 +27,8 @@ class _SimpleMLP(nn.Module):
 
         hidden_activation = ACTIVATION_GENERATORS[h_act]
         output_activation = ACTIVATION_GENERATORS[out_act]
+
+        self.metrics = metrics
 
         self.layers = nn.ModuleDict()
         if n_layers == 1:
@@ -45,8 +48,27 @@ class _SimpleMLP(nn.Module):
     def forward(self, x: torch.Tensor):
         for layer in self.layers.values():
             x = layer.forward(x)
+        self.y_pred = x
         return x
     
-    def get_loss(self, x: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
-        y_pred = self.forward(x)
-        return self.loss_fn(y_pred, y_true)
+    def get_loss(self, y_true: torch.Tensor, x: torch.Tensor = None) -> torch.Tensor:
+        if x is not None:
+            self.y_pred = self.forward(x)
+
+        return self.loss_fn(self.y_pred, y_true)        
+    
+    def get_metrics(self, y_true: torch.Tensor, x: torch.Tensor = None):
+        if x is not None:
+            self.y_pred = self.forward(x)
+
+        metrics_outputs = {}
+        for m_name, m in self.metrics.items():
+            m.reset()
+            # print(m)
+            # print(self.y_pred)
+            # print(self.y_pred.shape)
+            # print(y_true)
+            # print(y_true.shape)
+            metrics_outputs[m_name] = m(self.y_pred, y_true)
+
+        return metrics_outputs 

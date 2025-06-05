@@ -9,6 +9,8 @@ training:
   save_best_model: True
   model_save_path: 'models/best_model.pth'
   logging_interval: 10
+
+  accuracy:
   metrics:
     - accuracy
     - precision

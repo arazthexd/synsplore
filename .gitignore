@@ -6,8 +6,6 @@ dist/
 .eggs/
 .pytest_cache/
 .vscode/
-data/
-out/
 x.ipynb
 trash
 
@@ -18,3 +16,8 @@ trash
 
 ## hydra
 outputs/
+
+##data
+!configs/data/
+data/
+out/

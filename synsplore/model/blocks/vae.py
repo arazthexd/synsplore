@@ -18,7 +18,8 @@ class _SimpleVAEDecoder(nn.Module):
                  h_act: str = "relu",
                  out_act: str = "none",
                  loss: str = "ce",
-                 loss_beta: float = 1.0):
+                 loss_beta: float = 1.0,
+                 metrics: dict = {}):
         assert n_layers > 0
         if d_latent is None:
             d_latent = d_in
@@ -28,6 +29,8 @@ class _SimpleVAEDecoder(nn.Module):
             d_out = d_hidden
 
         super().__init__()
+        
+        self.metrics = metrics
         
         self.mu = nn.Linear(d_in, d_latent)
         self.logvar = nn.Linear(d_in, d_latent)
@@ -49,10 +52,25 @@ class _SimpleVAEDecoder(nn.Module):
         logvar = self.logvar(z)
         std = torch.exp(0.5 * logvar)
         z = mu + std * torch.randn_like(mu)
+
+        self.y_pred = self.decoder(z)
+        self.mu_ = mu
+        self.logvar_ = logvar
         return self.decoder(z), mu, logvar
     
-    def get_loss(self, z: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
-        y_pred, mu, logvar = self.forward(z)  
-        recon_loss = self.decoder.loss_fn(y_pred, y_true)
-        kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    def get_loss(self, y_true: torch.Tensor, z: torch.Tensor = None) -> torch.Tensor:
+        if z is not None:
+            self.y_pred, self.mu_, self.logvar_ = self.forward(z)
+        recon_loss = self.decoder.loss_fn(self.y_pred, y_true)
+        kl_loss = -0.5 * torch.sum(1 + self.logvar_ - self.mu_.pow(2) - self.logvar_.exp())
         return recon_loss + self.loss_beta * kl_loss
+    
+    def get_metrics(self, y_true: torch.Tensor, z: torch.Tensor = None):
+        if z is not None:
+            self.y_pred, self.mu_, self.logvar_ = self.forward(z)
+
+        metrics_outputs = {}
+        for m_name, m in self.metrics.items():
+            metrics_outputs[m_name] = m(self.y_pred, y_true)
+
+        return metrics_outputs 

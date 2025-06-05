@@ -42,6 +42,21 @@ classifier:
   h_act: "relu"
   out_act: "none"
   loss: "ce"
+  metrics:
+    acc:
+      _target_: torchmetrics.Accuracy
+      num_classes: ${...d_out}
+      task: "multiclass"
+
+    cm: 
+      _target_: synsplore.utils.metrics.ConfusionMatrix
+      num_classes: ${...d_out}
+      task: "multiclass"
+
+    # roc_auc: 
+    #   _target_: torchmetrics.AUROC
+    #   num_classes: ${...d_out}
+    #   task: "multiclass"
 
 r_dec:
   _target_: "synsplore.model.blocks.vae._SimpleVAEDecoder"
@@ -52,7 +67,7 @@ r_dec:
   n_layers: 3
   h_act: "relu"
   out_act: "none"
-  loss: "bce_logits"
+  loss: "dice" # [dice, bce_logits]
   loss_beta: 1
 
 rxn_dec:
